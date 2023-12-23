@@ -1,10 +1,3 @@
-//
-//  RecipesApp.swift
-//  Recipes
-//
-//  Created by Hao Li on 12/18/23.
-//
-
 import SwiftUI
 
 @main

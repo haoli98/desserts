@@ -1,5 +1,8 @@
 import SwiftUI
 
+/**
+View that displays a list of dessert meals. Each dessert is represented with a card containing the thumbnail and name. Each  card is also a navigable link, leading to a detailed view of the dessert.
+*/
 struct DessertListView: View {
     @State private var desserts = [Meal]()
     
@@ -8,12 +11,13 @@ struct DessertListView: View {
             ScrollView {
                 LazyVStack(spacing: 20) {
                     ForEach(desserts, id: \.idMeal) { dessert in
-                        NavigationLink(destination: DessertDetailView(mealId: dessert.idMeal ?? "")) {
+                        NavigationLink(destination: DessertDetailView(mealId: dessert.idMeal!)) {
                             DessertCardView(dessert: dessert)
                         }
                     }
                 }
                 .padding()
+                .accessibilityIdentifier("DessertsListView")
             }
             .onAppear {
                 loadDesserts()
@@ -27,9 +31,9 @@ struct DessertListView: View {
     private func loadDesserts() {
         Task {
             do {
-                self.desserts = try await TheMealDbManagerImpl().fetchDesserts()
+                self.desserts = try await TheMealDbManagerImpl().fetchDesserts();
             } catch {
-                print("Error loading desserts: \(error)")
+                print("Error loading desserts list: \(error)")
             }
         }
     }
@@ -40,31 +44,28 @@ struct DessertCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if let thumbnailURL = dessert.strMealThumb, let url = URL(string: thumbnailURL) {
-                AsyncImage(url: url) { image in
+            AsyncImage(url: URL(string: dessert.strMealThumb!)) { image in
                     image.resizable()
                 } placeholder: {
-                    Image(systemName: "photo")
+                    Image(systemName: "Dessert thumbnail image")
                         .resizable()
                 }
                 .scaledToFill()
-                .frame(height: 150) // Reduced image height
+                .frame(height: 150)
                 .clipped()
                 .cornerRadius(15)
-            }
             
-            Text(dessert.strMeal ?? "Unknown Dessert")
-                .font(.title3) // Increased font size
+            Text(dessert.strMeal!)
+                .font(.title3)
                 .fontWeight(.bold)
-                .foregroundColor(.primary) // Ensures text color adapts to dark/light mode
+                .foregroundColor(.primary)
         }
         .padding()
-        .background(Color(UIColor.secondarySystemBackground)) // Adaptive background color
+        .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(15)
         .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 0)
     }
 }
-
 
 struct DessertListView_Previews: PreviewProvider {
     static var previews: some View {

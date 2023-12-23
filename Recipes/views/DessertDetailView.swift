@@ -1,5 +1,8 @@
 import SwiftUI
 
+/**
+View that displays detailed information of each dessert. Contains the image, instructions of making the recipe, and the required ingriedients and associated measurements.
+*/
 struct DessertDetailView: View {
     let mealId: String
     @State private var mealDetails: Meal?
@@ -12,50 +15,47 @@ struct DessertDetailView: View {
                 if isLoading {
                     ProgressView()
                 } else if let meal = mealDetails {
-                    // Thumbnail Image
-                    if let thumbnailURL = meal.strMealThumb, let url = URL(string: thumbnailURL) {
-                        AsyncImage(url: url) { image in
-                            image.resizable()
-                        } placeholder: {
-                            ProgressView()
-                        }
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: .infinity)
+                    AsyncImage(url: URL(string: meal.strMealThumb!)) { image in
+                        image.resizable()
+                            .accessibilityIdentifier("MealThumbnail");
+                        
+                    } placeholder: {
+                        ProgressView()
                     }
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity)
 
-                    Text(meal.strMeal ?? "Unknown Dessert")
+                    Text(meal.strMeal!)
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .padding(.vertical)
-
                     Divider()
-
+                    
                     Text("Instructions")
                         .font(.title2)
                         .padding(.bottom, 2)
-
-                    Text(meal.strInstructions ?? "No instructions")
-                    
+                    Text(meal.strInstructions!)
+                        .accessibilityIdentifier("InstructionsTitle");
                     Divider()
-
+                    
                     Text("Required Ingredients")
                         .font(.title2)
                         .padding(.bottom, 2)
+                        .accessibilityIdentifier("RequiredIngredientsText");
 
-                    ForEach(1...20, id: \.self) { index in
-                        if let ingredient = meal.valueForKey("strIngredient\(index)"),
-                           let measure = meal.valueForKey("strMeasure\(index)"),
-                           !ingredient.isEmpty {
-                            HStack {
-                                Text(ingredient)
-                                Spacer()
-                                Text(measure)
-                            }
-                            .padding(.vertical, 1)
+                    ForEach(Array(meal.ingredients.enumerated()), id: \.offset) { index, ingredient in
+                        HStack {
+                            Text(ingredient)
+                                .accessibilityIdentifier("Ingredient");
+                            Spacer()
+                            Text(meal.measurements.count > index ? meal.measurements[index] : "Quantity not specified")
+                                .accessibilityIdentifier("Measurement");
                         }
+                        .padding(.vertical, 1)
+                        .accessibilityIdentifier("DessertDetailsView")
                     }
-                } else if error != nil {
-                    Text("Failed to load details")
+                } else if let error = error {
+                    Text("Sorry, failed to load meal details. Error: \(error.localizedDescription)")
                         .foregroundColor(.red)
                 }
             }
@@ -72,25 +72,18 @@ struct DessertDetailView: View {
         isLoading = true
         Task {
             do {
-                let details = try await TheMealDbManagerImpl().fetchMealById(id: mealId)
-                mealDetails = details
-            } catch {
-                self.error = error
+                let details = try await TheMealDbManagerImpl().fetchMealById(id: mealId);
+                mealDetails = details;
+            } catch let fetchError {
+                self.error = fetchError;
             }
-            isLoading = false
+            isLoading = false;
         }
-    }
-}
-
-extension Meal {
-    func valueForKey(_ key: String) -> String? {
-        let mirror = Mirror(reflecting: self)
-        return mirror.children.first { $0.label == key }?.value as? String
     }
 }
 
 struct DessertDetailView_Previews: PreviewProvider {
     static var previews: some View {
-        DessertDetailView(mealId: "52977") // Use an actual meal ID for real previews
+        DessertDetailView(mealId: "52977");
     }
 }
